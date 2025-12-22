@@ -1,0 +1,71 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build for Pi (Docker)",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "compose",
+                "run",
+                "--rm",
+                "indra-builder",
+                "cargo",
+                "build",
+                "--target",
+                "aarch64-unknown-linux-gnu",
+                "--release"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$rustc"]
+        },
+        {
+            "label": "Build debug for Pi (Docker)",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "compose",
+                "run",
+                "--rm",
+                "indra-builder",
+                "cargo",
+                "build",
+                "--target",
+                "aarch64-unknown-linux-gnu"
+            ],
+            "group": "build",
+            "problemMatcher": ["$rustc"]
+        },
+        {
+            "label": "Check (Docker)",
+            "type": "shell",
+            "command": "docker",
+            "args": [
+                "compose",
+                "run",
+                "--rm",
+                "indra-builder",
+                "cargo",
+                "check",
+                "--target",
+                "aarch64-unknown-linux-gnu"
+            ],
+            "group": "build",
+            "problemMatcher": ["$rustc"]
+        },
+        {
+            "label": "Deploy to Pi",
+            "type": "shell",
+            "command": "scp",
+            "args": [
+                "./target/aarch64-unknown-linux-gnu/release/indra",
+                "indra@raspberrypie.local:~/"
+            ],
+            "dependsOn": ["Build for Pi (Docker)"],
+            "problemMatcher": []
+        }
+    ]
+}
