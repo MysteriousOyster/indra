@@ -4,5 +4,4 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-# rppal = "0.22.1"
-rust_gpiozero = "0.2.1"
+rppal = "0.22.1"
