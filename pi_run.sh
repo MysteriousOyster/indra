@@ -6,3 +6,5 @@ fi
 
 chmod +x ./target/aarch64-unknown-linux-gnu/release/indra
 ./target/aarch64-unknown-linux-gnu/release/indra
+
+git restore *
