@@ -10,10 +10,10 @@ use rppal::gpio::Gpio;
 use crate::indicator_led::{IndicatorLED, SafetyState};
 
 const DIGIPOT_CS: u8 = 1;
-const DIGIPIT_INC: u8 = 1;
-const DIGIPOT_UD: u8 = 1;
-const RED_LED_PIN: u8 = 1;
-const SERVO_PIN: u8 = 1;
+const DIGIPIT_INC: u8 = 2;
+const DIGIPOT_UD: u8 = 3;
+const RED_LED_PIN: u8 = 4;
+const SERVO_PIN: u8 = 5;
 
 #[macro_export]
 macro_rules! delay_ms {
