@@ -46,10 +46,10 @@ impl Digipot {
         delay_ms!(1);
         for _ in 1..=steps {
             // Trigger
-            self.cs.set_high();
+            self.inc.set_low();
             delay_ms!(1);
             // Complete the toggle
-            self.cs.set_high();
+            self.inc.set_high();
             delay_ms!(1);
         }
         // Disable the chip
