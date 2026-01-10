@@ -16,6 +16,21 @@
         "isDefault": true
       },
       "detail": "Builds the project for the Raspberry Pi"
+    },
+    {
+      "label": "Cross Build (DEV)",
+      "type": "process",
+      "command": "cross",
+      "args": [
+        "build",
+        "--target",
+        "aarch64-unknown-linux-gnu"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "detail": "Builds the project for the Raspberry Pi (dev)"
     }
   ]
 }

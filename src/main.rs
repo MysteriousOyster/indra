@@ -31,9 +31,9 @@ macro_rules! future_sec_f64 {
 fn main() {
     let gpio = Gpio::new().unwrap();
     let mut motor = Digipot::new(
-        gpio.get(DIGIPOT_CS).unwrap().into_output_high(),
-        gpio.get(DIGIPIT_INC).unwrap().into_output_high(),
-        gpio.get(DIGIPOT_UD).unwrap().into_output_high(),
+        gpio.get(DIGIPOT_CS).expect("DIGIPOT_CS pin init failed!").into_output_high(),
+        gpio.get(DIGIPIT_INC).expect("DIGIPOT_INC pin init failed!").into_output_high(),
+        gpio.get(DIGIPOT_UD).expect("DIGIPOT_UD pin init failed!").into_output_high(),
         100,
     );
     // let mut red_led = IndicatorLED::new(gpio.get(RED_LED_PIN).unwrap().into_output_high());
