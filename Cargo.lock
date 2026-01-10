@@ -78,14 +78,8 @@ name = "indra"
 version = "0.1.0"
 dependencies = [
  "dialoguer",
- "rust_gpiozero",
+ "rppal",
 ]
-
-[[package]]
-name = "lazy_static"
-version = "1.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
@@ -113,20 +107,11 @@ checksum = "69cdb34c158ceb288df11e18b4bd39de994f6657d83847bdffdbd7f346754b0f"
 
 [[package]]
 name = "rppal"
-version = "0.12.0"
+version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb26758c881b4837b2f4aef569e4251f75388e36b37204e1804ef429c220121c"
+checksum = "c1ce3b019009cff02cb6b0e96e7cc2e5c5b90187dc1a490f8ef1521d0596b026"
 dependencies = [
- "lazy_static",
  "libc",
-]
-
-[[package]]
-name = "rust_gpiozero"
-version = "0.2.1"
-source = "git+https://github.com/rahul-thakoor/rust_gpiozero/#ba9ceaa1c67e16653f8dd3f599d3ca5b8b913308"
-dependencies = [
- "rppal",
 ]
 
 [[package]]

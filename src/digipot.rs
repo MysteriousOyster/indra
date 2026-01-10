@@ -1,9 +1,9 @@
-extern crate rust_gpiozero as gpio;
-
+extern crate rppal;
 use std::cmp::Ordering;
 
+use rppal::gpio::OutputPin;
+
 use super::delay_ms;
-use gpio::DigitalOutputDevice;
 
 #[derive(Clone, Copy)]
 pub enum Direction {
@@ -13,23 +13,18 @@ pub enum Direction {
 
 pub struct Digipot {
     /// High -> disabled, Low -> enabled.
-    cs: DigitalOutputDevice,
+    cs: OutputPin,
     /// Low -> trigger
-    inc: DigitalOutputDevice,
+    inc: OutputPin,
     // High -> up, Low -> down
-    ud: DigitalOutputDevice,
+    ud: OutputPin,
     // From 1 -> steps
     steps: u8,
     current_step: Option<u8>,
 }
 
 impl Digipot {
-    pub fn new(cs_pin: u8, inc_pin: u8, ud_pin: u8, steps: u8) -> Self {
-        let cs = DigitalOutputDevice::new(cs_pin);
-        let inc = DigitalOutputDevice::new(inc_pin);
-        let ud = DigitalOutputDevice::new(ud_pin);
-        cs.on();
-        inc.on();
+    pub fn new(cs: OutputPin, inc: OutputPin, ud: OutputPin, steps: u8) -> Self {
         Digipot {
             cs,
             inc,
@@ -38,27 +33,27 @@ impl Digipot {
             current_step: None,
         }
     }
-    pub fn wipe(&self, steps: u8, ud: Direction) {
+    pub fn wipe(&mut self, steps: u8, ud: Direction) {
         // Set the up/down pin
         match ud {
-            Direction::Up => self.ud.on(),
-            Direction::Down => self.ud.off(),
+            Direction::Up => self.ud.set_high(),
+            Direction::Down => self.ud.set_low(),
         }
         // Turn the inc pin to high if not already set
-        self.inc.on();
+        self.inc.set_high();
         // Enable the chip
-        self.cs.off();
+        self.cs.set_low();
         delay_ms!(1);
         for _ in 1..=steps {
             // Trigger
-            self.cs.off();
+            self.cs.set_high();
             delay_ms!(1);
             // Complete the toggle
-            self.cs.on();
+            self.cs.set_high();
             delay_ms!(1);
         }
         // Disable the chip
-        self.cs.on();
+        self.cs.set_high();
     }
     pub fn reset(&mut self, reset_direction: Direction) {
         self.wipe(self.steps, reset_direction);
@@ -86,6 +81,6 @@ impl Digipot {
 
 impl Drop for Digipot {
     fn drop(&mut self) {
-        self.cs.on();
+        self.cs.set_high();
     }
 }
