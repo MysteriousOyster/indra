@@ -46,7 +46,7 @@ impl Digipot {
         delay_ms!(1);
         for _ in 1..=steps {
             // Trigger
-            self.cs.set_high();
+            self.cs.set_low();
             delay_ms!(1);
             // Complete the toggle
             self.cs.set_high();
