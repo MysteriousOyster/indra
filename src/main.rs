@@ -38,8 +38,8 @@ fn main() {
     );
     // let mut red_led = IndicatorLED::new(gpio.get(RED_LED_PIN).unwrap().into_output_high());
     motor.set(100);
-    dialoguer::Password::default()
-        .with_prompt("Press Enter to stop.")
+    let _: String = dialoguer::Input::new()
+        .with_prompt("Press ENTER to stop. ")
         .interact()
         .unwrap();
 }
