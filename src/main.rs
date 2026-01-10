@@ -37,9 +37,10 @@ fn main() {
         100,
     );
     // let mut red_led = IndicatorLED::new(gpio.get(RED_LED_PIN).unwrap().into_output_high());
-    motor.set(100);
-    let _: String = dialoguer::Input::new()
-        .with_prompt("Press ENTER to stop. ")
-        .interact()
-        .unwrap();
+    loop {
+        motor.set(100);
+        delay_ms!(1000);
+        motor.set(1);
+        delay_ms!(1000);
+    }
 }
