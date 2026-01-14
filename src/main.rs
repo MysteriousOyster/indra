@@ -18,9 +18,9 @@ use crate::{
     servo::Servo,
 };
 
-const DIGIPOT_CS: u8 = 4;
-const DIGIPOT_INC: u8 = 5;
-const DIGIPOT_UD: u8 = 6;
+const DIGIPOT_CS: u8 = 11;
+const DIGIPOT_INC: u8 = 27;
+const DIGIPOT_UD: u8 = 22;
 const RED_LED_PIN: u8 = 26;
 
 fn take_picture(path: &str) -> io::Result<Child> {
