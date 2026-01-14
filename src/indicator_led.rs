@@ -7,12 +7,16 @@ use std::{
         atomic::{AtomicBool, Ordering},
     },
     thread::{self, JoinHandle},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
-use super::future_sec_f64;
+macro_rules! future_sec_f64 {
+    ($e:expr) => {
+        std::time::Instant::now() + std::time::Duration::from_secs_f64($e)
+    };
+}
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum SafetyState {
     Sleep,
     Safe,
@@ -22,7 +26,7 @@ pub enum SafetyState {
 impl Into<(f64, f64)> for SafetyState {
     fn into(self) -> (f64, f64) {
         match self {
-            Self::Sleep => (f64::MAX, 0.0),
+            Self::Sleep => (10.0, 0.0),
             Self::Safe => (1.0, 2.0),
             Self::Unsafe => (0.5, 0.5),
         }
@@ -36,7 +40,8 @@ impl Default for SafetyState {
 }
 
 pub struct IndicatorLED {
-    output: Arc<Mutex<OutputPin>>,
+    #[allow(unused)]
+    pub output: Arc<Mutex<OutputPin>>,
     handler_thread: Option<JoinHandle<()>>,
     stop_flag: Arc<AtomicBool>,
     state: Arc<Mutex<SafetyState>>,
@@ -61,7 +66,10 @@ impl IndicatorLED {
         }
     }
 
-    pub fn set(&mut self, state: SafetyState) -> Result<(), PoisonError<MutexGuard<SafetyState>>> {
+    pub fn set(
+        &mut self,
+        state: SafetyState,
+    ) -> Result<(), PoisonError<MutexGuard<'_, SafetyState>>> {
         let mut current_state = self.state.lock()?;
         *current_state = state;
         Ok(())
@@ -75,14 +83,19 @@ impl IndicatorLED {
         stop_flag: Arc<AtomicBool>,
         state: Arc<Mutex<SafetyState>>,
     ) {
-        let mut last_state = state.lock().unwrap();
-        let (mut on_time, mut off_time): (f64, f64) = (*last_state).into();
+        // We have to put the lock inside another scope to prevent it from blocking.
+        let mut last_state = { *state.lock().unwrap() };
+        let (mut on_time, mut off_time): (f64, f64) = last_state.into();
+        {
+            output.lock().unwrap().set_high()
+        };
         let mut next_trigger = future_sec_f64!(on_time);
         while !stop_flag.load(Ordering::Acquire) {
             if let Ok(state) = state.try_lock() {
-                if *last_state != *state {
-                    *last_state = *state;
+                if last_state != *state {
+                    last_state = *state;
                     (on_time, off_time) = (*state).into();
+                    next_trigger = future_sec_f64!(on_time);
                 }
             }
             if Instant::now() > next_trigger {
@@ -96,6 +109,7 @@ impl IndicatorLED {
                     }
                 }
             }
+            thread::sleep(Duration::from_millis(1));
         }
     }
 }
@@ -104,7 +118,10 @@ impl Drop for IndicatorLED {
     fn drop(&mut self) {
         self.stop_flag.store(true, Ordering::Release);
         if let Some(handle) = self.handler_thread.take() {
-            handle.join();
+            let _ = handle.join();
+        }
+        if let Ok(mut output) = self.output.lock() {
+            output.set_low();
         }
     }
 }

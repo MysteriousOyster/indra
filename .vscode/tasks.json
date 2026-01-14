@@ -28,7 +28,7 @@
       ],
       "group": {
         "kind": "build",
-        "isDefault": true
+        "isDefault": false
       },
       "detail": "Builds the project for the Raspberry Pi (dev)"
     }
