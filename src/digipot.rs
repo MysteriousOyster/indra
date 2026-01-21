@@ -108,7 +108,7 @@ impl Digipot {
     pub fn set_specified_volatile(&mut self, step: u8, volatile: bool) {
         let step = step.clamp(1, self.steps);
         if self.current_step == None {
-            self.reset(Direction::Up);
+            self.reset(Direction::Down);
         }
         let current_step = self.current_step.unwrap();
         let direction = match step.cmp(&current_step) {
@@ -131,7 +131,6 @@ impl Digipot {
 
 impl Drop for Digipot {
     fn drop(&mut self) {
-        // Errors must be ignored in the drop function. Panics are expensive.
         self.cs.set_high();
     }
 }

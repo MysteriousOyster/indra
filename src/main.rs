@@ -1,15 +1,24 @@
-extern crate rppal;
 extern crate crossterm;
+extern crate rppal;
+extern crate serde;
+extern crate toml;
 
 mod indicator_led;
 mod servo;
 //use indicator_led::{IndicatorLED, IndicatorLEDState};
 mod digipot;
-use crossterm::{event::{self, Event, KeyCode}, terminal::{disable_raw_mode, enable_raw_mode}};
+use crossterm::{
+    event::{self, Event, KeyCode},
+    terminal::{disable_raw_mode, enable_raw_mode},
+};
 use rppal::{gpio::Gpio, pwm::Channel};
+use serde::Deserialize;
 use std::{
-    io,
-    process::{Child, Command}, thread, time::Duration,
+    fs, io,
+    path::Path,
+    process::{Child, Command},
+    thread,
+    time::Duration,
 };
 
 use crate::{
@@ -23,11 +32,26 @@ const DIGIPOT_INC: u8 = 27;
 const DIGIPOT_UD: u8 = 22;
 const RED_LED_PIN: u8 = 26;
 
-fn take_picture(path: &str) -> io::Result<Child> {
+#[derive(Deserialize)]
+struct ProgramConfig {
+    picture_dir: String,
+    num_pictures: usize,
+    motor_step_off: u8,
+    motor_step_slow: u8,
+    motor_step_on: u8,
+    servo_retract_percent: f64,
+    servo_extend_percent: f64,
+    delay_retract_slow: u64,
+    delay_extend_slow: u64,
+    delay_wind: u64,
+    delay_picture: u64,
+}
+
+fn take_picture(path: &Path) -> io::Result<Child> {
     Command::new("rpicam-still")
         // Set the path of the image
         .arg("-o")
-        .arg(path)
+        .arg(path.as_os_str())
         // Disable preview
         .arg("--nopreview")
         // Set highest JPEG quality
@@ -40,6 +64,12 @@ fn take_picture(path: &str) -> io::Result<Child> {
 }
 
 fn main() -> io::Result<()> {
+    // Configuration loading
+    let filename = "conf.toml";
+    let contents = fs::read_to_string(filename)?;
+    let config: ProgramConfig = toml::from_str(&contents).expect("conf.toml incorrectly formatted");
+    let picture_dir = Path::new(config.picture_dir.as_str());
+
     enable_raw_mode()?;
     let gpio = Gpio::new().unwrap();
     let mut motor = Digipot::new(
@@ -60,9 +90,9 @@ fn main() -> io::Result<()> {
             .into_output(),
     );
     let servo = Servo::new(Channel::Pwm0).expect("failed to get servo");
-    servo.set_percent(100.0).unwrap();
+    servo.set_percent(config.servo_retract_percent).unwrap();
     red_led.set(SafetyState::Safe).unwrap();
-    motor.set(50);
+    motor.set(config.motor_step_off);
     println!("Press ENTER to stop.");
     let mut picture_counter: u32 = 1;
     loop {
@@ -76,29 +106,38 @@ fn main() -> io::Result<()> {
         }
 
         // Retract Servo
-        servo.set_percent(0.0).unwrap();
-        // Set motor to slow speed
-        motor.set(80);
-        // Wait for servo & motor 
-        thread::sleep(Duration::from_millis(200));
-        // Push servo in
-        servo.set_percent(100.0).unwrap();
+        servo.set_percent(config.servo_retract_percent).unwrap();
+        // Turn motor off
+        motor.set(config.motor_step_off);
+        // Wait for servo & motor
+        thread::sleep(Duration::from_millis(config.delay_retract_slow));
+        // Push servo in and turn motor to slow
+        servo.set_percent(config.servo_extend_percent).unwrap();
+        motor.set(config.motor_step_slow);
         // Let's wait for the Servo to go in.
-        thread::sleep(Duration::from_millis(2000));
+        thread::sleep(Duration::from_millis(config.delay_extend_slow));
         // We are dealing with dangerous tension now, so we should indicate it.
         red_led.set(SafetyState::Unsafe).unwrap();
         // Now, we will ramp up the speed of the motor.
-        motor.set(0);
+        motor.set(config.motor_step_on);
         // Wait for it to wind up.
-        thread::sleep(Duration::from_millis(5000));
+        thread::sleep(Duration::from_millis(config.delay_wind));
         // Ok, now we should be good to retract the servo and cut the motor.
-        motor.set(100);
-        servo.set_percent(0.0).unwrap();
+        motor.set(config.motor_step_off);
+        servo.set_percent(config.servo_retract_percent).unwrap();
         // Let's take a few pictures.
-        for i in 1..=5 {
-            let filename = format!("~/pictures/{picture_counter}-{i}.jpeg");
-            take_picture(filename.as_str()).unwrap();
-            thread::sleep(Duration::from_millis(500));
+        let mut last_handle: Option<Child> = None;
+        for i in 1..=config.num_pictures {
+            let picture_name = format!("{picture_counter}-{i}.jpeg");
+            let picture_path = picture_dir.join(picture_name);
+            if let Some(ref mut x) = last_handle {
+                if let Ok(Some(_)) = x.try_wait() {
+                    last_handle = Some(take_picture(picture_path.as_path()).unwrap());
+                }
+            } else {
+                last_handle = Some(take_picture(picture_path.as_path()).unwrap());
+            }
+            thread::sleep(Duration::from_millis(config.delay_picture));
         }
         red_led.set(SafetyState::Safe).unwrap();
         picture_counter += 1;

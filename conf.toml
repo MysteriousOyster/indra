@@ -1,0 +1,17 @@
+picture_dir = "/home/indra/pictures"
+num_pictures = 5
+
+# Motor configuration
+motor_step_off = 0
+motor_step_slow = 20
+motor_step_on = 100
+
+# Servo configuration
+servo_retract_percent = 0.0
+servo_extend_percent = 100.0
+
+# Delays
+delay_retract_slow = 200
+delay_extend_slow = 2000
+delay_wind = 5000
+delay_picture = 500
