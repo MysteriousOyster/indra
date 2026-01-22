@@ -2,6 +2,7 @@ extern crate crossterm;
 extern crate rppal;
 extern crate serde;
 extern crate toml;
+extern crate libcamera;
 
 mod indicator_led;
 mod servo;
@@ -11,12 +12,13 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
+use libcamera::camera_manager::CameraManager;
 use rppal::{gpio::Gpio, pwm::Channel};
 use serde::Deserialize;
 use std::{
     fs, io,
     path::Path,
-    process::{Child, Command},
+    process::{Child, Command, Stdio},
     thread,
     time::Duration,
 };
@@ -60,6 +62,7 @@ fn take_picture(path: &Path) -> io::Result<Child> {
         // Set the '''best''' mode settings
         .arg("--mode")
         .arg("3280:2464:12:P")
+        .stdout(Stdio::null())
         .spawn()
 }
 
@@ -70,7 +73,9 @@ fn main() -> io::Result<()> {
     let config: ProgramConfig = toml::from_str(&contents).expect("conf.toml incorrectly formatted");
     let picture_dir = Path::new(config.picture_dir.as_str());
 
-    enable_raw_mode()?;
+    let cm = CameraManager::new().expect("failed to start camera manager");
+    
+
     let gpio = Gpio::new().unwrap();
     let mut motor = Digipot::new(
         gpio.get(DIGIPOT_CS)
@@ -95,6 +100,7 @@ fn main() -> io::Result<()> {
     motor.set(config.motor_step_off);
     println!("Press ENTER to stop.");
     let mut picture_counter: u32 = 1;
+    enable_raw_mode()?;
     loop {
         if event::poll(Duration::from_millis(100))? {
             if let Event::Key(key) = event::read()? {
