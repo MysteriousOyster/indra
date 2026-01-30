@@ -2,7 +2,6 @@ extern crate crossterm;
 extern crate rppal;
 extern crate serde;
 extern crate toml;
-extern crate libcamera;
 
 mod indicator_led;
 mod servo;
@@ -12,7 +11,6 @@ use crossterm::{
     event::{self, Event, KeyCode},
     terminal::{disable_raw_mode, enable_raw_mode},
 };
-use libcamera::camera_manager::CameraManager;
 use rppal::{gpio::Gpio, pwm::Channel};
 use serde::Deserialize;
 use std::{
@@ -72,9 +70,6 @@ fn main() -> io::Result<()> {
     let contents = fs::read_to_string(filename)?;
     let config: ProgramConfig = toml::from_str(&contents).expect("conf.toml incorrectly formatted");
     let picture_dir = Path::new(config.picture_dir.as_str());
-
-    let cm = CameraManager::new().expect("failed to start camera manager");
-    
 
     let gpio = Gpio::new().unwrap();
     let mut motor = Digipot::new(

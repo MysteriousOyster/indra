@@ -1,0 +1,4 @@
+
+[build.env]
+passthrough=["PKG_CONFIG_PATH=/tmp/fake-pkg-config"]
+volumes=["/tmp/fake-pkg-config/=C:\\Users\\leifw\\Documents\\Rust\\indra\\fake-pkgconfig"]

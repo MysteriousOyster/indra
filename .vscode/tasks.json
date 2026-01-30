@@ -15,7 +15,7 @@
         "kind": "build",
         "isDefault": true
       },
-      "detail": "Builds the project for the Raspberry Pi"
+      "detail": "Builds the project for the Raspberry Pi",
     },
     {
       "label": "Cross Build (DEV)",
